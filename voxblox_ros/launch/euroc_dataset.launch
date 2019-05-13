@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-15"?>
 <launch>
-  <arg name="play_bag" default="true" />
-  <arg name="bag_file" default="/path/to/V1_01_easy.bag"/>
   <arg name="voxel_size" default="0.10"/>
   <arg name="process_every_nth_frame" default="5" />
   <arg name="scale" default="0.5" />
 
   <!-- Download dataset here: https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets -->
 
-  <node name="player" pkg="rosbag" type="play" output="screen" args=" -r 1.0 --clock $(arg bag_file)" if="$(arg play_bag)"/>
-
-  <node name="dense_stereo" pkg="image_undistort" type="dense_stereo_node">
+  <node name="dense_stereo" pkg="image_undistort" type="dense_stereo_node" output="screen">
     <param name="input_camera_info_from_ros_params" value = "true"/>
     <param name="first_camera_namespace" value="cam0"/>
     <param name="second_camera_namespace" value="cam1"/>
@@ -18,6 +14,7 @@
     <param name="second_output_frame" value="cam1"/>
     <param name="scale" value="$(arg scale)"/>
     <param name="process_every_nth_frame" value="$(arg process_every_nth_frame)"/>
+    <param name="publish_tf" value="false"/>
 
     <rosparam file="$(find voxblox_ros)/cfg/calibrations/euroc_camchain.yaml"/>
 
@@ -27,7 +24,7 @@
     <remap from="raw/second/camera_info" to="cam1/camera_info"/>
   </node>
 
-  <node name="voxblox_node" pkg="voxblox_ros" type="esdf_server" output="screen" args="-alsologtostderr" clear_params="true">
+  <node name="voxblox_node" pkg="voxblox_ros" type="esdf_server" args="-alsologtostderr" clear_params="true">
     <remap from="pointcloud" to="dense_stereo/pointcloud"/>
     <remap from="freespace_pointcloud" to="dense_stereo/freespace_pointcloud"/>
     <param name="use_freespace_pointcloud" value="true" />
@@ -37,7 +34,7 @@
     <param name="color_mode" value="colors" />
     <param name="use_tf_transforms" value="false" />
     <param name="verbose" value="true" />
-    <remap from="transform" to="vicon/firefly_sbx/firefly_sbx" />
+    <remap from="transform" to="/cppt_vio/transform" />
     <param name="update_mesh_every_n_sec" value="1.0" />
     <param name="slice_level" value="1.0" />
     <param name="method" value="fast" />
